@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DICE ROLLER - GET 16 TO WIN</title>
+    <style>
+      body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #74ebd5, #acb6e5);
+        background-size: cover;
+      }
+
+      #root {
+        background-color: rgba(255, 255, 255, 0.9);
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        text-align: center;
+        position: relative;
+      }
+
+      .title-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        font-size: 36px;
+        color: #333;
+        margin-right: 10px;
+      }
+
+      h2 {
+        font-size: 24px;
+        color: #ff7043;
+      }
+
+      .dice-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+        width: 200px;
+        margin: 20px auto;
+        perspective: 1000px;
+      }
+
+      .dice {
+        width: 100px;
+        height: 100px;
+        display: grid;
+        grid-template-rows: repeat(3, 1fr);
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        background-color: #ff7043;
+        border-radius: 16px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        transition: transform 1s ease-in-out;
+        position: relative;
+        transform-style: preserve-3d;
+      }
+
+      .dice-dot {
+        width: 20px;
+        height: 20px;
+        background-color: white;
+        border-radius: 50%;
+        justify-self: center;
+        align-self: center;
+      }
+
+      .rolling {
+        animation: roll 1s ease-in-out infinite, colorChange 1s linear infinite;
+      }
+
+      @keyframes roll {
+        0% {
+          transform: rotate(0deg) translateY(0px);
+        }
+        50% {
+          transform: rotate(360deg) translateY(-50px);
+        }
+        100% {
+          transform: rotate(720deg) translateY(0px);
+        }
+      }
+
+      @keyframes colorChange {
+        0% {
+          background-color: #ff7043;
+        }
+        25% {
+          background-color: #42a5f5;
+        }
+        50% {
+          background-color: #66bb6a;
+        }
+        75% {
+          background-color: #ffa726;
+        }
+        100% {
+          background-color: #ff7043;
+        }
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 18px;
+        border: none;
+        border-radius: 8px;
+        background-color: #ff7043;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        margin-top: 20px;
+      }
+
+      button:hover {
+        background-color: #ff5722;
+      }
+
+      .winner-message {
+        font-size: 28px;
+        color: #4caf50;
+        margin-top: 20px;
+      }
+
+      /* Sprinkle Shower */
+      .sprinkles {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .sprinkle {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #ffeb3b;
+        border-radius: 50%;
+        animation: fall 2s linear infinite;
+      }
+
+      @keyframes fall {
+        0% {
+          transform: translateY(-100px);
+        }
+        100% {
+          transform: translateY(100vh);
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <script type="text/babel">
+      function DiceRoller() {
+        const [diceNumber, setDiceNumber] = React.useState(1);
+        const [isRolling, setIsRolling] = React.useState(false);
+        const [playerTurn, setPlayerTurn] = React.useState(1);
+        const [playerScores, setPlayerScores] = React.useState([0, 0]);
+        const [winner, setWinner] = React.useState(null);
+
+        const rollDice = () => {
+          if (winner) return; // Prevent rolling after a winner is declared
+          setIsRolling(true);
+
+          let count = 0;
+          const interval = setInterval(() => {
+            const randomNumber = Math.floor(Math.random() * 6) + 1;
+            setDiceNumber(randomNumber);
+            count++;
+
+            if (count >= 10) {
+              clearInterval(interval);
+              setIsRolling(false);
+              updateScore(randomNumber);
+            }
+          }, 100);
+        };
+
+        const updateScore = (rolledNumber) => {
+          const newScores = [...playerScores];
+          newScores[playerTurn - 1] += rolledNumber;
+
+          if (newScores[playerTurn - 1] >= 16) {
+            setWinner(`Player ${playerTurn}`);
+          } else {
+            setPlayerScores(newScores);
+            setPlayerTurn(playerTurn === 1 ? 2 : 1);
+          }
+        };
+
+        const restartGame = () => {
+          setDiceNumber(1);
+          setIsRolling(false);
+          setPlayerTurn(1);
+          setPlayerScores([0, 0]);
+          setWinner(null);
+        };
+
+        const renderDots = (number) => {
+          const dotPatterns = {
+            1: [false, false, false, false, true, false, false, false, false],
+            2: [true, false, false, false, false, false, false, false, true],
+            3: [true, false, false, false, true, false, false, false, true],
+            4: [true, false, true, false, false, false, true, false, true],
+            5: [true, false, true, false, true, false, true, false, true],
+            6: [true, false, true, true, false, true, true, false, true],
+          };
+
+          return dotPatterns[number].map((isDot, index) =>
+            isDot ? <div key={index} className="dice-dot"></div> : <div key={index}></div>
+          );
+        };
+
+        const renderSprinkles = () => {
+          const sprinkles = Array.from({ length: 100 }, (_, index) => (
+            <div
+              key={index}
+              className="sprinkle"
+              style={{
+                left: `${Math.random() * 100}%`,
+                animationDuration: `${Math.random() * 2 + 1}s`,
+              }}
+            ></div>
+          ));
+          return <div className="sprinkles">{sprinkles}</div>;
+        };
+
+        return (
+          <div>
+            <div className="title-container">
+              <h1>DICE ROLLER</h1>
+              <h2>GET 16 TO WIN</h2>
+            </div>
+            <button onClick={rollDice} disabled={isRolling || winner}>
+              {winner ? "Game Over" : `Roll Dice (Player ${playerTurn})`}
+            </button>
+            <div className="dice-container">
+              <div className={`dice ${isRolling ? "rolling" : ""}`}>
+                {renderDots(diceNumber)}
+              </div>
+            </div>
+            <div>
+              <p>Player 1 Score: {playerScores[0]}</p>
+              <p>Player 2 Score: {playerScores[1]}</p>
+            </div>
+            {winner && (
+              <div>
+                <h2 className="winner-message">{winner} Wins!</h2>
+                {renderSprinkles()}
+                <button onClick={restartGame}>Restart Game</button>
+              </div>
+            )}
+          </div>
+        );
+      }
+
+      ReactDOM.render(<DiceRoller />, document.getElementById("root"));
+    </script>
+  </body>
+  </html>
